@@ -14,6 +14,7 @@ function App() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   // Générer automatiquement la date et heure de création
   useEffect(() => {
@@ -102,7 +103,7 @@ function App() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Simulation de l'envoi vers PostgreSQL
+  // Envoi des données vers l'API Express
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -111,15 +112,23 @@ function App() {
     }
 
     setIsSubmitting(true);
+    setApiError('');
 
     try {
-      // Simulation d'un appel API vers PostgreSQL
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsSuccess(true);
+      } else {
+        setApiError('Échec de l\'enregistrement');
+      }
 
-      console.log('Données à envoyer vers PostgreSQL:', formData);
-      
-      setIsSuccess(true);
-      
       // Réinitialiser le formulaire après 3 secondes
       setTimeout(() => {
         setFormData({
@@ -142,6 +151,7 @@ function App() {
 
     } catch (error) {
       console.error('Erreur lors de l\'envoi:', error);
+      setApiError('Erreur réseau');
     } finally {
       setIsSubmitting(false);
     }
@@ -315,6 +325,14 @@ function App() {
                   <span className="text-green-800 font-medium">
                     Données enregistrées avec succès dans PostgreSQL !
                   </span>
+                </div>
+              </div>
+            )}
+            {apiError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+                  <span className="text-red-800 font-medium">{apiError}</span>
                 </div>
               </div>
             )}
